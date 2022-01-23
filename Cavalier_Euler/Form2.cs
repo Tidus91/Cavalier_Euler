@@ -26,6 +26,7 @@ namespace Cavalier_Euler
         int position;
         int fuiteMin;
         int fuiteMinIndex;
+        Timer timer;
 
         public Form2()
         {
@@ -63,6 +64,7 @@ namespace Cavalier_Euler
             }
             fuiteMin = 0;
             fuiteMinIndex = 0;
+            timer = new System.Windows.Forms.Timer();
             
         }
 
@@ -87,18 +89,11 @@ namespace Cavalier_Euler
                 testPositionAvailable();
                 coups.Add(position);
 
-                Button buttonGo = new Button();
-                buttonGo.Text = "Go";
-                buttonGo.Location = new System.Drawing.Point(600, 300);
-                buttonGo.Name = "buttonGo";
-                buttonGo.Size = new System.Drawing.Size(60, 60);
-                buttonGo.UseVisualStyleBackColor = true;
-                buttonGo.Click += new System.EventHandler(this.buttonGo_Click);
-                buttonGo.Visible = true;
-                this.Controls.Add(buttonGo);
+                goAndStopButton();
             }
             
         }
+
 
         private void button1_Click_1(object sender, EventArgs e)
         {
@@ -136,8 +131,14 @@ namespace Cavalier_Euler
             button1.Visible = false;
             button2.Visible = false;
             listBox1.Visible = true;
-            listBox2.Visible = true;
+            listBox2.Visible = false;
 
+            goAndStopButton();
+
+        }
+
+        private void goAndStopButton()
+        {
             Button buttonGo = new Button();
             buttonGo.Text = "Go";
             buttonGo.Location = new System.Drawing.Point(600, 300);
@@ -148,24 +149,79 @@ namespace Cavalier_Euler
             buttonGo.Visible = true;
             this.Controls.Add(buttonGo);
 
+            Button buttonStop = new Button();
+            buttonStop.Text = "Stop";
+            buttonStop.Location = new System.Drawing.Point(800, 300);
+            buttonStop.Name = "buttonStop";
+            buttonStop.Size = new System.Drawing.Size(60, 60);
+            buttonStop.UseVisualStyleBackColor = true;
+            buttonStop.Click += new System.EventHandler(this.buttonStop_Click);
+            buttonStop.Visible = false;
+            this.Controls.Add(buttonStop);
         }
 
-        private void buttonGo_Click(object sender, EventArgs e)
+        private void buttonStop_Click(object sender, EventArgs e)
         {
-            if (listBox1.SelectedItem == null || listBox2.SelectedItem == null)
-                return;
-            label1.Text = "sa marche !!!!!";
-            string type = listBox1.SelectedItem.ToString();
-            string time = listBox2.SelectedItem.ToString();
+            Control [] buttonGo = this.Controls.Find("buttonGo", false);
+            buttonGo[0].Enabled = true;
 
+            Button myButton = (Button)sender;
+            myButton.Visible = false;
+
+            // la je veux stopper la fonction buttonGo_Click, mais je sais pas comment , un truc avec stop Thread surement
+        }
+
+        async private void buttonGo_Click(object sender, EventArgs e)
+        {
+            Control[] buttonGo = this.Controls.Find("buttonGo", false);
+            Control[] buttonStop = this.Controls.Find("buttonStop", false);
+
+            string type = "";
+            string time = "";
+            if (listBox1.SelectedItem == null)
+                return;
+            type = listBox1.SelectedItem.ToString();
+            if (listBox1.SelectedIndex == 2)
+            {
+                if (listBox2.SelectedItem == null)
+                    return;
+                time = listBox2.SelectedItem.ToString();
+            }
+                
+            
             if(type == "pas-a-pas")
             {
-                Task.Delay(20000000);
-                label1.Text = "omggggggggggggg";
+                label1.Text = "c'est le " + compteur + " coup(s) !";
                 algoEuler();
             }
-        }
+            else if(type == "pas-de-5")
+            {
+                for (int i = 0; i < 5; ++i)
+                    algoEuler();
+                label1.Text = "c'est le " + compteur + " coup(s) !";
+                
+            }
+            else if (type == "Itinéraire-non-stop")
+            {
+                buttonStop[0].Visible = true;
+                buttonGo[0].Enabled = false;
+                for (int i = 0; i < grille.Length; ++i)
+                {
+                    algoEuler();
+                    if (time == "1s")
+                    {
+                        await Task.Delay(1000);
+                        //System.Threading.Thread.Sleep(1000);
+                    }
+                    else if (time == "3s")
+                        await Task.Delay(3000);
+                    else if (time == "5s")
+                        await Task.Delay(5000);
+                    label1.Text = "c'est le " + compteur + " coup(s) !";
+                }
 
+            }
+        }
 
         private int getIndiceButton(Button bp)
         {
@@ -311,6 +367,16 @@ namespace Cavalier_Euler
 
             return;
 
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ListBox myListBox = (ListBox)sender;
+            if (myListBox.SelectedIndex == 2)
+                listBox2.Visible = true;
+            else
+                listBox2.Visible = false;
+        
         }
     }
 
