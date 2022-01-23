@@ -138,17 +138,38 @@ namespace Cavalier_Euler
                 myButton.Enabled = false;
                 coups.Add(position);
                 if (testPositionAvailable() == 0)
+                {
                     label2.Text = "Fin du game, vous avez perdu en " + compteur + " essais !";
-                //finDuGame();
-                
+                    //finDuGame();
+                }
             }
 
         }
 
+        
         private void finDuGame()
+        {
+            Button buttonRejouer = new Button();
+            buttonRejouer.Text = "Voulez vous rejouer ?";
+            buttonRejouer.Location = new System.Drawing.Point(900, 300);
+            buttonRejouer.Name = ";";
+            buttonRejouer.Size = new System.Drawing.Size(60, 60);
+            buttonRejouer.UseVisualStyleBackColor = true;
+            buttonRejouer.Click += new System.EventHandler(this.buttonRejouer_Click);
+            buttonRejouer.Visible = true;
+            this.Controls.Add(buttonRejouer);
+        }
+
+        private void buttonRejouer_Click(object sender, EventArgs e)
+        {
+            initGame();
+        }
+        
+        private void initGame()
         {
             coups = new List<int>();
             compteur = 0; //nombre de coups
+            compteurAnnulation = 10;
             stateInit = false;
             position = 0; // ou est mon cavalier
             trigger = false;
