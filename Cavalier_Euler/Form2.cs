@@ -14,6 +14,7 @@ namespace Cavalier_Euler
     {
 
         Button[] grille;
+        Button[] copieGrille;
         Image cavalier;
         List<int> coups;
         List<int> coupsFutur;
@@ -23,6 +24,8 @@ namespace Cavalier_Euler
         bool trigger;
         bool cheatCode;
         int position;
+        int fuiteMin;
+        int fuiteMinIndex;
 
         public Form2()
         {
@@ -58,7 +61,9 @@ namespace Cavalier_Euler
                     x = 2;
                 }
             }
-
+            fuiteMin = 0;
+            fuiteMinIndex = 0;
+            
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -157,6 +162,7 @@ namespace Cavalier_Euler
             {
                 Task.Delay(20000000);
                 label1.Text = "omggggggggggggg";
+                algoEuler();
             }
         }
 
@@ -234,6 +240,76 @@ namespace Cavalier_Euler
 
         private void algoEuler()
         {
+            testPositionAvailable();
+            if(compteur == 64)
+            {
+                label1.Text = "c'est gagné !!";
+                return;
+            }
+            if(coupsFutur.Count == 0)
+            {
+                label1.Text = "gros bug, c'est bizarre";
+                return;
+            }
+
+            List<int> N = new List<int>(coupsFutur); //liste des numéro de mes cases possible à l'étape N ## (car sinon je vais les perdre en rappelant la fonction testPosition)
+
+            fuiteMin = testPositionAvailableEuler(N[0]);
+            fuiteMinIndex = 0;
+
+            // pour chacun d'entre eux, je dois regarder quelles cases sont disponible
+            for (int i =0; i < N.Count; ++i)
+            {
+                if (testPositionAvailableEuler(N[i]) < fuiteMin)    // la dans coupsFutur j'ai donc mes cases à l'étape n+1;
+                {
+                    
+                    fuiteMin = testPositionAvailableEuler(N[i]);
+                    fuiteMinIndex = i;
+                }
+            }
+            jouerButton(N[fuiteMinIndex]);
+            
+        }
+
+        private int testPositionAvailableEuler(int N)
+        {
+            int temp = position;
+            position = N;
+
+            int nbPos = 0;
+            coupsFutur.Clear();
+            for (int i = 0; i < 64; ++i)
+            {
+                if ((testCoup(i) == 1) && (grille[i].Enabled == true))
+                {
+                    //Console.WriteLine("i = " + i);
+                    nbPos++;
+                    coupsFutur.Add(i);
+                }
+                if (cheatCode == true)
+                    fcheatCode();
+
+            }
+            position = temp;
+
+            return nbPos;
+
+        }
+
+        private void jouerButton(int buttonP)
+        {
+            compteur++;
+            grille[position].BackgroundImage = null;
+            grille[buttonP].BackgroundImage = cavalier;
+            grille[buttonP].BackgroundImageLayout = ImageLayout.Stretch;
+            position = buttonP;
+            grille[buttonP].Text = compteur.ToString();
+            grille[buttonP].BackgroundImage = cavalier;
+            grille[buttonP].BackColor = Color.Yellow;
+            grille[buttonP].Enabled = false;
+            coups.Add(buttonP);
+
+            return;
 
         }
     }
