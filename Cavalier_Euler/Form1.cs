@@ -17,6 +17,7 @@ namespace Cavalier_Euler
         List<int> coups;
         List<int> coupsFutur;
         int compteur;
+        int compteurAnnulation;
         bool stateInit;
         bool trigger;
         bool cheatCode;
@@ -29,6 +30,7 @@ namespace Cavalier_Euler
             coupsFutur = new List<int>();
             cavalier = Image.FromFile("img\\cavalierEchec.jpg");
             compteur = 0; //nombre de coups
+            compteurAnnulation = 10;
             stateInit = false;
             position = 0; // ou est mon cavalier
             trigger = false;
@@ -65,29 +67,18 @@ namespace Cavalier_Euler
             // on reset les precedentes cases d'aide
             for (int i = 0; i < grille.Length; ++i)
             {
-                if (!(coups.Contains(grille[i].TabIndex)))
-                    grille[i].BackColor = Color.DarkBlue;
+                // colorié en bleu les autres cases
+                if(grille[i].Text == "")
+                    grille[i].BackColor = default;
+                // colorié en jaune les cases déja joué
+                if (coups.Contains(grille[i].TabIndex))
+                    grille[i].BackColor = Color.Yellow;
             }
             // on marque les cases ou on peut se deplacer
             for (int i = 0; i < coupsFutur.Count; ++i)
             {
                 grille[coupsFutur[i]].BackColor = Color.Red;
             }
-            
-         /*   
-            for (int i = 0; i < 64; ++i)
-            {
-                if ((testCoup(i) == 1) && (grille[i].Enabled == true))
-                {
-                    grille[i].BackColor = Color.Red;
-                    if (coups.Contains(grille[i].TabIndex))
-                    {
-                        grille[i].BackColor = default;
-                    }
-                }
-
-            }
-         */
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -115,6 +106,7 @@ namespace Cavalier_Euler
                 myButton.Text = compteur.ToString();
                 myButton.BackgroundImage = cavalier;
                 myButton.BackgroundImageLayout = ImageLayout.Stretch;
+                myButton.BackColor = Color.Yellow;
                 myButton.Enabled = false;
                 stateInit = true;
                 label2.Text = "Ou voulez vous jouer ensuite ?  :  " + compteur + "ème coups !";
@@ -142,6 +134,7 @@ namespace Cavalier_Euler
                 myButton.BackgroundImageLayout = ImageLayout.Stretch;
                 position = myIndice;
                 myButton.Text = compteur.ToString();
+                myButton.BackColor = Color.Yellow;
                 myButton.Enabled = false;
                 coups.Add(position);
                 if (testPositionAvailable() == 0)
@@ -274,26 +267,60 @@ namespace Cavalier_Euler
                 label2.Visible = true;
                 button103.Visible = true;
                 button104.Visible = true;
-
-                Button buttonCheat = new Button();
-                buttonCheat.Text = "Activé/désactivé cheat";
-                buttonCheat.Location = new Point(600, 250);
-                buttonCheat.Name = "buttonCheat";
-                buttonCheat.Size = new Size(194,23); 
-                buttonCheat.UseVisualStyleBackColor = true;
-                buttonCheat.Click += new System.EventHandler(this.buttonCheat_Click);
-                buttonCheat.Visible = true;
-                this.Controls.Add(buttonCheat);
-
             }
                 
+        }
+
+        private void buttonCancel_Click(object sender, EventArgs e)
+        {
+
+            if (compteur > 1 && compteurAnnulation > 0)
+            {
+                int lastI = (coups.Count - 1);
+
+                grille[coups[lastI]].Enabled = true;
+                grille[coups[lastI]].Text = "";
+                grille[coups[lastI]].BackColor = default;
+                grille[coups[lastI]].BackgroundImage = null;
+                //grille[lastI].BackgroundImageLayout = ImageLayout.Stretch;
+                grille[coups[lastI - 1]].BackgroundImage = cavalier;
+
+
+                coups.RemoveAt(lastI);
+                position = grille[coups[lastI - 1]].TabIndex;
+                compteur--;
+                compteurAnnulation--;
+                testPositionAvailable();
+                Control [] myLabel = this.Controls.Find("labelCancel",false);
+                myLabel[0].Text = "Il vous reste : " + compteurAnnulation + " retour possible";
+
+            }
         }
 
         private void buttonCheat_Click(object sender, EventArgs e)
         {
             Button myButton = (Button)sender;
-            cheatCode = true;
-            myButton.Visible = false;
+            if (!cheatCode)
+            {
+                cheatCode = true;
+                testPositionAvailable();
+                Control[] myLabel = this.Controls.Find("labelCheat", false);
+                myLabel[0].Text = "l'aide est activé !";
+                return;
+            }
+            else
+            {
+                cheatCode = false;
+                for(int i = 0; i < grille.Length; ++i)
+                {
+                    if (!(coups.Contains(grille[i].TabIndex)))
+                        grille[i].BackColor = default;
+                }
+                Control[] myLabel = this.Controls.Find("labelCheat", false);
+                myLabel[0].Text = "l'aide n'est activé.";
+            }
+            
+            //myButton.Visible = false;
         }
 
         private void lancerSimulation()
@@ -311,11 +338,8 @@ namespace Cavalier_Euler
                 {
                     b.Enabled = true;
                 }
-                button103.Visible = false;
-                button104.Visible = false;
+
             }
-
-
             else if (myButton.Name == "button104")
             {
                 Random r = new Random();
@@ -330,15 +354,63 @@ namespace Cavalier_Euler
                 compteur++;
                 label2.Text = "Ou voulez vous jouer ensuite ?  :  " + compteur + "ème coups !";
                 position = rd;
+                coups.Add(position);
                 grille[position].Text = compteur.ToString();
+                grille[position].BackColor = Color.Yellow;
                 grille[position].BackgroundImage = cavalier;
                 grille[position].BackgroundImageLayout = ImageLayout.Stretch;
                 grille[position].Enabled = false;
-                button103.Visible = false;
-                button104.Visible = false;
+                
 
+                
             }
+            creationButtonsCheatAndCancel();
+            button103.Visible = false;
+            button104.Visible = false;
+            button104.Enabled = false;
+        }
+
+        private void creationButtonsCheatAndCancel()
+        {
+            Button buttonCheat = new Button();
+            buttonCheat.Text = "Activé/désactivé cheat";
+            buttonCheat.Location = new Point(600, 250);
+            buttonCheat.Name = "buttonCheat";
+            buttonCheat.Size = new Size(194, 23);
+            buttonCheat.UseVisualStyleBackColor = true;
+            buttonCheat.Click += new System.EventHandler(this.buttonCheat_Click);
+            buttonCheat.Visible = true;
+            this.Controls.Add(buttonCheat);
+
+            Label labelCheat = new Label();
+            labelCheat.Text = "l'aide n'est pas activé";
+            labelCheat.Location = new Point(600, 200);
+            labelCheat.Name = "LabelCheat";
+            labelCheat.Size = new Size(194, 23);
+            labelCheat.Visible = true;
+            this.Controls.Add(labelCheat);
+
+
+
+            Button buttonCancel = new Button();
+            buttonCancel.Text = "annulé coup précédent";
+            buttonCancel.Location = new Point(800, 250);
+            buttonCancel.Name = "buttonCancel";
+            buttonCancel.Size = new Size(194, 23);
+            buttonCancel.UseVisualStyleBackColor = true;
+            buttonCancel.Click += new System.EventHandler(this.buttonCancel_Click);
+            buttonCancel.Visible = true;
+            this.Controls.Add(buttonCancel);
+
+            Label labelCancel = new Label();
+            labelCancel.Text = "Il vous reste : " + compteurAnnulation + " retour possible";
+            labelCancel.Location = new Point(800, 200);
+            labelCancel.Name = "labelCancel";
+            labelCancel.Size = new Size(194, 23);
+            labelCancel.Visible = true;
+            this.Controls.Add(labelCancel);
         }
 
     }
+
 }
